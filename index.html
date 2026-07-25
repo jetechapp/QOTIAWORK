@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QOTIA Work</title>
+
+  <!-- Colori brand e manifest PWA -->
+  <meta name="theme-color" content="#0056b3">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Icone per dispositivi (sostituisci con i tuoi percorsi) -->
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
+
+  <style>
+    /* ============================================================
+       GLOBAL & VARIABILI (tema QOTIA)
+       ============================================================ */
+    :root {
+      --qotia-blue: #0056b3;
+      --qotia-blue-dark: #003366;
+      --qotia-yellow: #fecb00;
+      --qotia-yellow-dark: #e5b800;
+      --qotia-white: #ffffff;
+      --qotia-light-bg: #f4f6f9;
+      --qotia-text: #1a1a2e;
+      --qotia-gray: #6c757d;
+      --qotia-border: #dee2e6;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --radius: 8px;
+      --transition: 0.2s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--qotia-light-bg);
+      color: var(--qotia-text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ============================================================
+       LAYOUT PRINCIPALE (sidebar + chat)
+       ============================================================ */
+    #app {
+      display: none;  /* sarà mostrato dopo login */
+      width: 100%;
+      max-width: 1440px;
+      height: 100vh;
+      background: var(--qotia-white);
+      box-shadow: var(--shadow-md);
+    }
+
+    #app.active {
+      display: flex;
+    }
+
+    /* SIDEBAR (Blu QOTIA) */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--qotia-blue);
+      color: var(--qotia-white);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .sidebar-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-header .logo img {
+      height: 36px;
+      width: auto;
+    }
+
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      margin-top: 12px;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .sidebar-user:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .sidebar-user .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .sidebar-user .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--qotia-yellow);
+      color: var(--qotia-blue-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .sidebar-user .name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2ecc71;
+      display: inline-block;
+      margin-left: 4px;
+    }
+
+    .sidebar-user .logout-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color var(--transition);
+      padding: 4px 8px;
+    }
+    .sidebar-user .logout-btn:hover {
+      color: var(--qotia-white);
+    }
+
+    /* Liste navigazione */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .sidebar-nav::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+    }
+
+    .nav-section {
+      margin-bottom: 16px;
+    }
+
+    .nav-section .section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 16px 6px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-section .section-title .add-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: var(--qotia-white);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition);
+    }
+    .nav-section .section-title .add-btn:hover {
+      background: var(--qotia-yellow);
+      color: var(--qotia-blue-dark);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+      text-decoration: none;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--qotia-white);
+    }
+    .nav-item.active {
+      background: rgba(255,255,255,0.15);
+      border-left-color: var(--qotia-yellow);
+      color: var(--qotia-white);
+    }
+    .nav-item .icon {
+      font-size: 1.1rem;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .nav-item .badge {
+      margin-left: auto;
+      background: var(--qotia-yellow);
+      color: var(--qotia-blue-dark);
+      font-size: 0.7rem;
+      padding: 1px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* CHAT PRINCIPALE */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--qotia-white);
+      min-width: 0;
+    }
+
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--qotia-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--qotia-white);
+      flex-shrink: 0;
+    }
+
+    .chat-header .channel-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header .channel-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-header .channel-name .type-icon {
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+    .chat-header .member-count {
+      font-size: 0.8rem;
+      color: var(--qotia-gray);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: var(--qotia-light-bg);
+    }
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--qotia-border);
+      border-radius: 10px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      padding: 6px 0;
+      align-items: flex-start;
+    }
+
+    .message .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--qotia-yellow);
+      color: var(--qotia-blue-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .message .msg-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message .msg-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .message .msg-sender {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .message .msg-time {
+      font-size: 0.7rem;
+      color: var(--qotia-gray);
+    }
+
+    .message .msg-text {
+      word-break: break-word;
+      margin-top: 2px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .message .msg-file {
+      margin-top: 6px;
+    }
+    .message .msg-file img {
+      max-width: 300px;
+      max-height: 200px;
+      border-radius: var(--radius);
+      border: 1px solid var(--qotia-border);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .message .msg-file img:hover {
+      transform: scale(1.02);
+    }
+    .message .msg-file a {
+      color: var(--qotia-blue);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    /* Chat input */
+    .chat-input-area {
+      padding: 12px 24px 16px;
+      border-top: 1px solid var(--qotia-border);
+      background: var(--qotia-white);
+      flex-shrink: 0;
+    }
+
+    .chat-input-area .input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--qotia-light-bg);
+      border-radius: 24px;
+      padding: 6px 12px 6px 16px;
+      border: 1px solid var(--qotia-border);
+      transition: border-color 0.2s;
+    }
+    .chat-input-area .input-wrapper:focus-within {
+      border-color: var(--qotia-blue);
+    }
+
+    .chat-input-area .input-wrapper textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      resize: none;
+      padding: 8px 0;
+      font-size: 0.95rem;
+      outline: none;
+      max-height: 100px;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+
+    .chat-input-area .input-wrapper .file-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--qotia-gray);
+      padding: 4px;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-input-area .input-wrapper .file-btn:hover {
+      color: var(--qotia-blue);
+    }
+
+    .chat-input-area .input-wrapper .send-btn {
+      background: var(--qotia-yellow);
+      border: none;
+      color: var(--qotia-blue-dark);
+      font-weight: 600;
+      padding: 6px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    .chat-input-area .input-wrapper .send-btn:hover {
+      background: var(--qotia-yellow-dark);
+    }
+    .chat-input-area .input-wrapper .send-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* ============================================================
+       LOGIN OVERLAY
+       ============================================================ */
+    #login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--qotia-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #login-overlay.hidden {
+      display: none;
+    }
+
+    .login-box {
+      background: var(--qotia-white);
+      padding: 40px 32px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .login-box .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .login-box .logo img {
+      height: 48px;
+    }
+    .login-box .logo span {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--qotia-blue);
+    }
+
+    .login-box .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .login-box .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--qotia-text);
+      margin-bottom: 4px;
+    }
+
+    .login-box .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--qotia-border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .login-box .form-group input:focus {
+      border-color: var(--qotia-blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0,86,179,0.15);
+    }
+
+    .login-box .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--qotia-yellow);
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--qotia-blue-dark);
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .login-box .login-btn:hover {
+      background: var(--qotia-yellow-dark);
+    }
+
+    .login-box .error-msg {
+      color: #e74c3c;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    /* ============================================================
+       MODALI (creazione canale, gestione utenti)
+       ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--qotia-white);
+      border-radius: 16px;
+      max-width: 480px;
+      width: 90%;
+      padding: 28px 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-box .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-box .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--qotia-gray);
+      padding: 0 4px;
+    }
+
+    .modal-box .form-group {
+      margin-bottom: 14px;
+    }
+    .modal-box .form-group label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    .modal-box .form-group input,
+    .modal-box .form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--qotia-border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+    }
+
+    .modal-box .btn-primary {
+      background: var(--qotia-yellow);
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: var(--qotia-blue-dark);
+    }
+    .modal-box .btn-primary:hover {
+      background: var(--qotia-yellow-dark);
+    }
+    .modal-box .btn-danger {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .user-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--qotia-border);
+    }
+    .user-list-item .user-name {
+      font-weight: 500;
+    }
+    .user-list-item .user-role {
+      font-size: 0.8rem;
+      color: var(--qotia-gray);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 240px;
+        min-width: 240px;
+      }
+      .chat-header {
+        padding: 12px 16px;
+      }
+      .chat-messages {
+        padding: 12px 16px;
+      }
+      .chat-input-area {
+        padding: 8px 16px 12px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      #app {
+        flex-direction: column;
+        height: 100vh;
+      }
+      .sidebar {
+        width: 100%;
+        min-width: unset;
+        height: auto;
+        max-height: 45vh;
+        flex-shrink: 0;
+      }
+      .chat-area {
+        height: 55vh;
+      }
+      .sidebar-nav {
+        max-height: 30vh;
+      }
+    }
+
+    /* Utilità */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .gap-8 { gap: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       LOGIN OVERLAY
+       ============================================================ -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <div class="logo">
+        <!-- Sostituisci con il tuo logo -->
+        <img src="assets/logo.png" alt="QOTIA Work" style="height:48px;">
+        <span>QOTIA Work</span>
+      </div>
+      <form id="login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="nome@azienda.it" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="login-btn">Accedi</button>
+        <div id="login-error" class="error-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       APP PRINCIPALE
+       ============================================================ -->
+  <div id="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="assets/logo.png" alt="QOTIA Work" style="height:32px;">
+          QOTIA Work
+        </div>
+        <div class="sidebar-user" id="user-info">
+          <div class="user-info">
+            <div class="avatar" id="user-avatar">U</div>
+            <span class="name" id="user-name">Caricamento...</span>
+            <span class="status-dot"></span>
+          </div>
+          <button class="logout-btn" id="logout-btn" title="Logout">⏻</button>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Canali -->
+        <div class="nav-section">
+          <div class="section-title">
+            <span>Canali</span>
+            <button class="add-btn" id="add-channel-btn" title="Nuovo canale">+</button>
+          </div>
+          <div id="channel-list"></div>
+        </div>
+
+        <!-- Messaggi diretti -->
+        <div class="nav-section">
+          <div class="section-title">
+            <span>Messaggi diretti</span>
+          </div>
+          <div id="dm-list"></div>
+        </div>
+
+        <!-- Admin (solo super_admin) -->
+        <div class="nav-section" id="admin-section" style="display:none;">
+          <div class="section-title">
+            <span>Amministrazione</span>
+          </div>
+          <div class="nav-item" id="admin-users-btn">
+            <span class="icon">👥</span> Gestisci utenti
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- AREA CHAT -->
+    <main class="chat-area">
+      <div class="chat-header">
+        <div class="channel-info">
+          <div class="channel-name" id="channel-name">
+            <span class="type-icon" id="channel-type-icon">#</span>
+            <span id="channel-name-text">Seleziona un canale</span>
+          </div>
+          <div class="member-count" id="member-count"></div>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="message-container">
+        <!-- I messaggi verranno inseriti qui -->
+        <div class="text-center" style="color:var(--qotia-gray); padding:40px 0;">
+          👋 Benvenuto! Seleziona un canale o un DM per iniziare.
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <textarea id="message-input" rows="1" placeholder="Scrivi un messaggio..." disabled></textarea>
+          <button class="file-btn" id="file-upload-btn" disabled title="Allega file">📎</button>
+          <button class="send-btn" id="send-btn" disabled>Invia</button>
+        </div>
+        <input type="file" id="file-input" style="display:none;" multiple>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================================
+       MODALI
+       ============================================================ -->
+  <!-- Modale creazione canale -->
+  <div class="modal-overlay" id="channel-modal">
+    <div class="modal-box">
+      <div class="modal-title">
+        <span>Nuovo canale</span>
+        <button class="modal-close" data-modal="channel-modal">×</button>
+      </div>
+      <form id="channel-form">
+        <div class="form-group">
+          <label for="channel-name-input">Nome canale</label>
+          <input type="text" id="channel-name-input" placeholder="es. progetto-alfa" required>
+        </div>
+        <div class="form-group">
+          <label for="channel-private">Tipo</label>
+          <select id="channel-private">
+            <option value="false">Pubblico</option>
+            <option value="true">Privato</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Crea canale</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale gestione utenti (solo admin) -->
+  <div class="modal-overlay" id="users-modal">
+    <div class="modal-box">
+      <div class="modal-title">
+        <span>Gestione utenti</span>
+        <button class="modal-close" data-modal="users-modal">×</button>
+      </div>
+      <div id="user-list-container">
+        <p class="text-center">Caricamento...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT (Supabase + logica applicativa)
+       ============================================================ -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+      }
+    }
+  </script>
+
+  <script type="module">
+    // ----------------------------------------------
+    // 1. IMPORTAZIONI E CONFIGURAZIONE SUPABASE
+    // ----------------------------------------------
+    import { createClient } from '@supabase/supabase-js';
+
+    // *** SOSTITUISCI CON I TUOI DATI ***
+    const SUPABASE_URL = 'https://tuo-progetto.supabase.co';
+    const SUPABASE_ANON_KEY = 'tua-chiave-anon';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ----------------------------------------------
+    // 2. RIFERIMENTI DOM
+    // ----------------------------------------------
+    const app = document.getElementById('app');
+    const loginOverlay = document.getElementById('login-overlay');
+    const loginForm = document.getElementById('login-form');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
+
+    const userName = document.getElementById('user-name');
+    const userAvatar = document.getElementById('user-avatar');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    const channelList = document.getElementById('channel-list');
+    const dmList = document.getElementById('dm-list');
+    const addChannelBtn = document.getElementById('add-channel-btn');
+    const adminSection = document.getElementById('admin-section');
+    const adminUsersBtn = document.getElementById('admin-users-btn');
+
+    const channelNameText = document.getElementById('channel-name-text');
+    const channelTypeIcon = document.getElementById('channel-type-icon');
+    const memberCount = document.getElementById('member-count');
+    const messageContainer = document.getElementById('message-container');
+
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const fileUploadBtn = document.getElementById('file-upload-btn');
+    const fileInput = document.getElementById('file-input');
+
+    const channelModal = document.getElementById('channel-modal');
+    const channelForm = document.getElementById('channel-form');
+    const channelNameInput = document.getElementById('channel-name-input');
+    const channelPrivateSelect = document.getElementById('channel-private');
+
+    const usersModal = document.getElementById('users-modal');
+    const userListContainer = document.getElementById('user-list-container');
+
+    // ----------------------------------------------
+    // 3. STATO DELL'APP
+    // ----------------------------------------------
+    const state = {
+      currentUser: null,          // { id, full_name, avatar_url, role, is_active }
+      currentChannel: null,       // { id, name, is_private, type: 'channel' | 'dm', other_user_id? }
+      channels: [],               // array di canali
+      users: [],                 // tutti i profili (per DM)
+      messages: [],              // messaggi del canale corrente
+      subscriptions: {
+        messages: null,
+        channels: null,
+        profiles: null,
+      },
+      isAdmin: false,
+    };
+
+    // ----------------------------------------------
+    // 4. FUNZIONI DI UTILITY
+    // ----------------------------------------------
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getInitials(name) {
+      if (!name) return '?';
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[parts.length-1].charAt(0)).toUpperCase();
+    }
+
+    function getAvatarUrl(profile) {
+      return profile?.avatar_url || null;
+    }
+
+    // ----------------------------------------------
+    // 5. AUTENTICAZIONE
+    // ----------------------------------------------
+    async function handleLogin(email, password) {
+      try {
+        loginError.textContent = '';
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        // Recupera profilo
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError || !profile) throw new Error('Profilo non trovato');
+        if (!profile.is_active) {
+          await supabase.auth.signOut();
+          throw new Error('Account disattivato. Contatta l\'amministratore.');
+        }
+
+        // Login riuscito
+        state.currentUser = profile;
+        state.isAdmin = profile.role === 'super_admin';
+        loginOverlay.classList.add('hidden');
+        app.classList.add('active');
+        initApp();
+      } catch (err) {
+        loginError.textContent = err.message || 'Errore durante il login';
+        console.error(err);
+      }
+    }
+
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      // Reset UI
+      app.classList.remove('active');
+      loginOverlay.classList.remove('hidden');
+      state.currentUser = null;
+      state.currentChannel = null;
+      // Cleanup subscriptions
+      cleanupSubscriptions();
+    }
+
+    // Controllo sessione esistente
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Profilo
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        if (profile && profile.is_active) {
+          state.currentUser = profile;
+          state.isAdmin = profile.role === 'super_admin';
+          loginOverlay.classList.add('hidden');
+          app.classList.add('active');
+          initApp();
+          return;
+        }
+      }
+      // Se non c'è sessione o profilo non attivo, mostra login
+      loginOverlay.classList.remove('hidden');
+      app.classList.remove('active');
+    }
+
+    // Ascolta cambi di autenticazione (es. logout da altrove)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        handleLogout();
+      } else if (event === 'SIGNED_IN' && session) {
+        // Ricarica profilo e app
+        checkSession();
+      }
+    });
+
+    // ----------------------------------------------
+    // 6. INIZIALIZZAZIONE APP (dopo login)
+    // ----------------------------------------------
+    async function initApp() {
+      // Mostra info utente
+      userName.textContent = state.currentUser.full_name || 'Utente';
+      userAvatar.textContent = getInitials(state.currentUser.full_name);
+      if (state.isAdmin) {
+        adminSection.style.display = 'block';
+      }
+
+      // Carica canali e utenti
+      await loadChannels();
+      await loadUsers();
+
+      // Avvia realtime per canali e profili
+      subscribeToChannels();
+      subscribeToProfiles();
+
+      // Event listener per creazione canale
+      addChannelBtn.addEventListener('click', () => openModal('channel-modal'));
+      // Event listener per gestione utenti
+      adminUsersBtn.addEventListener('click', () => {
+        renderUserList();
+        openModal('users-modal');
+      });
+
+      // Seleziona automaticamente il primo canale (se esiste)
+      if (state.channels.length > 0) {
+        selectChannel(state.channels[0].id, 'channel');
+      } else {
+        // Mostra messaggio di benvenuto
+        messageContainer.innerHTML = `
+          <div class="text-center" style="color:var(--qotia-gray); padding:40px 0;">
+            🚀 Nessun canale ancora. Crea il primo canale!
+          </div>
+        `;
+        disableInput(true);
+      }
+    }
+
+    // ----------------------------------------------
+    // 7. CARICAMENTO DATI (canali, utenti)
+    // ----------------------------------------------
+    async function loadChannels() {
+      const { data, error } = await supabase
+        .from('channels')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Errore caricamento canali:', error);
+        return;
+      }
+      state.channels = data || [];
+      renderChannelList();
+    }
+
+    async function loadUsers() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, role, is_active')
+        .order('full_name');
+
+      if (error) {
+        console.error('Errore caricamento utenti:', error);
+        return;
+      }
+      state.users = data || [];
+      renderDMList();
+    }
+
+    // ----------------------------------------------
+    // 8. RENDER SIDEBAR
+    // ----------------------------------------------
+    function renderChannelList() {
+      if (!channelList) return;
+      if (state.channels.length === 0) {
+        channelList.innerHTML = `<div class="nav-item" style="color:rgba(255,255,255,0.4); font-size:0.85rem;">Nessun canale</div>`;
+        return;
+      }
+      channelList.innerHTML = state.channels.map(ch => `
+        <div class="nav-item ${state.currentChannel?.id === ch.id && state.currentChannel?.type === 'channel' ? 'active' : ''}"
+             data-channel-id="${ch.id}" data-type="channel">
+          <span class="icon">#</span>
+          <span>${escapeHtml(ch.name)}</span>
+          ${ch.is_private ? '<span style="font-size:0.7rem; opacity:0.6;">🔒</span>' : ''}
+        </div>
+      `).join('');
+
+      // Click listener per ogni canale
+      channelList.querySelectorAll('.nav-item[data-channel-id]').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.dataset.channelId;
+          selectChannel(id, 'channel');
+        });
+      });
+    }
+
+    function renderDMList() {
+      if (!dmList) return;
+      const currentUserId = state.currentUser?.id;
+      // Mostra tutti gli utenti tranne se stesso
+      const otherUsers = state.users.filter(u => u.id !== currentUserId && u.is_active !== false);
+      if (otherUsers.length === 0) {
+        dmList.innerHTML = `<div class="nav-item" style="color:rgba(255,255,255,0.4); font-size:0.85rem;">Nessun utente</div>`;
+        return;
+      }
+      dmList.innerHTML = otherUsers.map(u => `
+        <div class="nav-item ${state.currentChannel?.type === 'dm' && state.currentChannel?.other_user_id === u.id ? 'active' : ''}"
+             data-user-id="${u.id}" data-type="dm">
+          <span class="icon">💬</span>
+          <span>${escapeHtml(u.full_name || 'Utente')}</span>
+        </div>
+      `).join('');
+
+      dmList.querySelectorAll('.nav-item[data-user-id]').forEach(el => {
+        el.addEventListener('click', () => {
+          const userId = el.dataset.userId;
+          selectDM(userId);
+        });
+      });
+    }
+
+    // ----------------------------------------------
+    // 9. SELEZIONE CANALE / DM
+    // ----------------------------------------------
+    async function selectChannel(channelId, type) {
+      if (type === 'channel') {
+        const channel = state.channels.find(c => c.id === channelId);
+        if (!channel) return;
+        state.currentChannel = { id: channel.id, name: channel.name, type: 'channel', is_private: channel.is_private };
+        // Aggiorna header
+        channelTypeIcon.textContent = '#';
+        channelNameText.textContent = channel.name;
+        memberCount.textContent = `${channel.is_private ? '🔒 ' : ''}Canale`;
+        // Carica messaggi
+        await loadMessages(channelId);
+        // Sottoscrivi ai messaggi di questo canale
+        subscribeToMessages(channelId);
+        enableInput(true);
+      }
+      // Aggiorna attivo nella sidebar
+      updateActiveNavItem(channelId, type);
+    }
+
+    async function selectDM(userId) {
+      const user = state.users.find(u => u.id === userId);
+      if (!user) return;
+      // Cerca un canale DM esistente tra i due utenti (convenzione: nome = 'dm_' + id1 + '_' + id2)
+      // Per semplicità, creiamo un canale privato con nome "DM - Nome utente"
+      // Usiamo un canale privato con name = 'dm_' + sorted ids
+      const ids = [state.currentUser.id, userId].sort();
+      const dmName = `dm_${ids[0]}_${ids[1]}`;
+      // Cerchiamo se esiste già un canale con questo nome
+      let channel = state.channels.find(c => c.name === dmName);
+      if (!channel) {
+        // Creiamo il canale DM
+        const { data, error } = await supabase
+          .from('channels')
+          .insert({
+            name: dmName,
+            is_private: true,
+            created_by: state.currentUser.id,
+          })
+          .select()
+          .single();
+        if (error) {
+          console.error('Errore creazione DM:', error);
+          return;
+        }
+        channel = data;
+        // Aggiungi alla lista dei canali
+        state.channels.push(channel);
+        renderChannelList(); // lo vedrà solo l'admin? Per ora lo mostriamo in canali, ma non vogliamo mostrarlo come canale pubblico? Meglio tenerlo nascosto.
+        // In realtà i DM non dovrebbero apparire nella lista canali, ma li terremo separati.
+        // Quindi ricarichiamo la lista canali escludendo i dm? Meglio filtrare in renderChannelList.
+        // Per semplicità, li mostriamo solo nella sezione DM.
+      }
+      // Ora selezioniamo questo canale come corrente, ma come tipo 'dm'
+      state.currentChannel = {
+        id: channel.id,
+        name: `DM - ${user.full_name}`,
+        type: 'dm',
+        other_user_id: userId,
+        is_private: true,
+      };
+      // Aggiorna header
+      channelTypeIcon.textContent = '💬';
+      channelNameText.textContent = `DM - ${user.full_name}`;
+      memberCount.textContent = user.full_name || 'Utente';
+      // Carica messaggi del canale
+      await loadMessages(channel.id);
+      subscribeToMessages(channel.id);
+      enableInput(true);
+      updateActiveNavItem(userId, 'dm');
+    }
+
+    function updateActiveNavItem(id, type) {
+      // Rimuovi active da tutti
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      // Cerca l'item corrispondente
+      const selector = type === 'channel' ? `[data-channel-id="${id}"]` : `[data-user-id="${id}"]`;
+      const item = document.querySelector(selector);
+      if (item) item.classList.add('active');
+    }
+
+    // ----------------------------------------------
+    // 10. MESSAGGI (caricamento, invio, realtime)
+    // ----------------------------------------------
+    async function loadMessages(channelId) {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles(id, full_name, avatar_url)
+        `)
+        .eq('channel_id', channelId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Errore caricamento messaggi:', error);
+        return;
+      }
+      state.messages = data || [];
+      renderMessages();
+    }
+
+    function renderMessages() {
+      if (!messageContainer) return;
+      if (state.messages.length === 0) {
+        messageContainer.innerHTML = `
+          <div class="text-center" style="color:var(--qotia-gray); padding:30px 0;">
+            📭 Nessun messaggio. Invia il primo!
+          </div>
+        `;
+        return;
+      }
+
+      const html = state.messages.map(msg => {
+        const sender = msg.sender || { full_name: 'Utente', avatar_url: null };
+        const avatarText = getInitials(sender.full_name);
+        const time = formatTime(msg.created_at);
+        const fileHtml = msg.file_url ? (msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ?
+          `<div class="msg-file"><img src="${escapeHtml(msg.file_url)}" alt="allegato" loading="lazy"></div>` :
+          `<div class="msg-file"><a href="${escapeHtml(msg.file_url)}" target="_blank">📎 Scarica allegato</a></div>`) : '';
+
+        return `
+          <div class="message">
+            <div class="msg-avatar">${avatarText}</div>
+            <div class="msg-content">
+              <div class="msg-meta">
+                <span class="msg-sender">${escapeHtml(sender.full_name)}</span>
+                <span class="msg-time">${time}</span>
+              </div>
+              <div class="msg-text">${escapeHtml(msg.content) || ''}</div>
+              ${fileHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      messageContainer.innerHTML = html;
+      // Scroll in basso
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    async function sendMessage(content, fileUrl = null) {
+      if (!state.currentChannel) return;
+      const channelId = state.currentChannel.id;
+      const senderId = state.currentUser.id;
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          channel_id: channelId,
+          sender_id: senderId,
+          content: content.trim(),
+          file_url: fileUrl,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Errore invio messaggio:', error);
+        alert('Errore nell\'invio del messaggio.');
+      }
+      // Il messaggio verrà aggiunto via Realtime, non serve aggiungerlo manualmente
+    }
+
+    // Sottoscrizione realtime ai messaggi
+    function subscribeToMessages(channelId) {
+      // Rimuovi eventuale sottoscrizione precedente
+      if (state.subscriptions.messages) {
+        supabase.removeChannel(state.subscriptions.messages);
+        state.subscriptions.messages = null;
+      }
+
+      const channel = supabase
+        .channel(`messages:${channelId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `channel_id=eq.${channelId}`,
+          },
+          (payload) => {
+            // Aggiungi il nuovo messaggio alla lista e renderizza
+            const newMsg = payload.new;
+            // Recupera il profilo del mittente (potrebbe essere già in cache)
+            const sender = state.users.find(u => u.id === newMsg.sender_id) || { full_name: 'Utente' };
+            newMsg.sender = sender;
+            state.messages.push(newMsg);
+            renderMessages();
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Sottoscritto ai messaggi del canale', channelId);
+          }
+        });
+
+      state.subscriptions.messages = channel;
+    }
+
+    // Sottoscrizione ai cambiamenti dei canali
+    function subscribeToChannels() {
+      if (state.subscriptions.channels) {
+        supabase.removeChannel(state.subscriptions.channels);
+      }
+      const channel = supabase
+        .channel('channels-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'channels' },
+          () => {
+            // Ricarica canali e aggiorna lista
+            loadChannels();
+          }
+        )
+        .subscribe();
+      state.subscriptions.channels = channel;
+    }
+
+    // Sottoscrizione ai cambiamenti dei profili (utenti)
+    function subscribeToProfiles() {
+      if (state.subscriptions.profiles) {
+        supabase.removeChannel(state.subscriptions.profiles);
+      }
+      const channel = supabase
+        .channel('profiles-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'profiles' },
+          () => {
+            // Ricarica utenti e aggiorna DM list
+            loadUsers();
+            // Se l'utente corrente viene disattivato, forza logout
+            // Controlliamo se il nostro profilo è ancora attivo
+            if (state.currentUser) {
+              supabase
+                .from('profiles')
+                .select('is_active')
+                .eq('id', state.currentUser.id)
+                .single()
+                .then(({ data }) => {
+                  if (data && !data.is_active) {
+                    alert('Il tuo account è stato disattivato. Verrai disconnesso.');
+                    handleLogout();
+                  }
+                });
+            }
+          }
+        )
+        .subscribe();
+      state.subscriptions.profiles = channel;
+    }
+
+    // ----------------------------------------------
+    // 11. GESTIONE FILE (upload)
+    // ----------------------------------------------
+    async function uploadFile(file) {
+      if (!state.currentChannel) return null;
+      const channelId = state.currentChannel.id;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+      const filePath = `${channelId}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('attachments')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Errore upload:', error);
+        alert('Errore nel caricamento del file.');
+        return null;
+      }
+
+      // Ottieni URL pubblico
+      const { data: urlData } = supabase.storage
+        .from('attachments')
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    }
+
+    // ----------------------------------------------
+    // 12. UI: ABILITA/DISABILITA INPUT
+    // ----------------------------------------------
+    function enableInput(enabled) {
+      messageInput.disabled = !enabled;
+      sendBtn.disabled = !enabled;
+      fileUploadBtn.disabled = !enabled;
+      if (enabled) {
+        messageInput.placeholder = 'Scrivi un messaggio...';
+        messageInput.focus();
+      } else {
+        messageInput.placeholder = 'Seleziona un canale...';
+      }
+    }
+
+    function disableInput(disabled) {
+      enableInput(!disabled);
+    }
+
+    // ----------------------------------------------
+    // 13. MODALI
+    // ----------------------------------------------
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // Chiusura modali con pulsante X
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modalId = btn.dataset.modal;
+        closeModal(modalId);
+      });
+    });
+
+    // Chiusura click sul backdrop
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeModal(overlay.id);
+        }
+      });
+    });
+
+    // ----------------------------------------------
+    // 14. CREAZIONE CANALE
+    // ----------------------------------------------
+    channelForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = channelNameInput.value.trim();
+      const isPrivate = channelPrivateSelect.value === 'true';
+      if (!name) return;
+
+      const { data, error } = await supabase
+        .from('channels')
+        .insert({
+          name,
+          is_private: isPrivate,
+          created_by: state.currentUser.id,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        alert('Errore creazione canale: ' + error.message);
+        return;
+      }
+
+      // Aggiungi al stato e aggiorna lista
+      state.channels.push(data);
+      renderChannelList();
+      closeModal('channel-modal');
+      channelForm.reset();
+      // Seleziona il nuovo canale
+      selectChannel(data.id, 'channel');
+    });
+
+    // ----------------------------------------------
+    // 15. GESTIONE UTENTI (solo admin)
+    // ----------------------------------------------
+    async function renderUserList() {
+      userListContainer.innerHTML = '<p class="text-center">Caricamento...</p>';
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, is_active')
+        .order('full_name');
+
+      if (error) {
+        userListContainer.innerHTML = '<p class="text-center" style="color:#e74c3c;">Errore caricamento utenti</p>';
+        return;
+      }
+
+      if (data.length === 0) {
+        userListContainer.innerHTML = '<p class="text-center">Nessun utente trovato.</p>';
+        return;
+      }
+
+      let html = data.map(u => `
+        <div class="user-list-item">
+          <div>
+            <span class="user-name">${escapeHtml(u.full_name || 'Senza nome')}</span>
+            <span class="user-role">${u.role === 'super_admin' ? 'Admin' : 'Membro'}</span>
+            ${!u.is_active ? ' <span style="color:#e74c3c; font-size:0.8rem;">(Disattivato)</span>' : ''}
+          </div>
+          <div>
+            ${u.id !== state.currentUser?.id ? `
+              <button class="btn-danger" data-user-id="${u.id}" data-action="${u.is_active ? 'deactivate' : 'activate'}">
+                ${u.is_active ? 'Disattiva' : 'Attiva'}
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      userListContainer.innerHTML = html;
+
+      // Event listener per i pulsanti
+      userListContainer.querySelectorAll('.btn-danger').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const userId = btn.dataset.userId;
+          const action = btn.dataset.action; // 'activate' o 'deactivate'
+          const newStatus = action === 'activate' ? true : false;
+          const confirmMsg = newStatus ? 'Attivare questo utente?' : 'Disattivare questo utente? L\'accesso sarà immediatamente revocato.';
+          if (!confirm(confirmMsg)) return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({ is_active: newStatus })
+            .eq('id', userId);
+
+          if (error) {
+            alert('Errore: ' + error.message);
+          } else {
+            // Ricarica lista
+            renderUserList();
+            // Ricarica anche gli utenti nella sidebar
+            loadUsers();
+          }
+        });
+      });
+    }
+
+    // ----------------------------------------------
+    // 16. EVENT LISTENER PRINCIPALI
+    // ----------------------------------------------
+    // Login
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value.trim();
+      if (email && password) {
+        handleLogin(email, password);
+      } else {
+        loginError.textContent = 'Inserisci email e password.';
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', handleLogout);
+
+    // Invio messaggio (pulsante)
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (text) {
+        sendMessage(text);
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+      }
+    });
+
+    // Invio con Ctrl+Enter o Enter (senza shift)
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+    });
+
+    // Upload file
+    fileUploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async () => {
+      const files = fileInput.files;
+      if (files.length === 0) return;
+      const file = files[0];
+      // Carica e invia messaggio con link
+      const url = await uploadFile(file);
+      if (url) {
+        // Invia un messaggio con il link (vuoto o con descrizione)
+        const text = messageInput.value.trim() || '📎 Allegato';
+        await sendMessage(text, url);
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+      }
+      fileInput.value = ''; // reset
+    });
+
+    // ----------------------------------------------
+    // 17. PULIZIA SOTTOSCRIZIONI
+    // ----------------------------------------------
+    function cleanupSubscriptions() {
+      if (state.subscriptions.messages) {
+        supabase.removeChannel(state.subscriptions.messages);
+        state.subscriptions.messages = null;
+      }
+      if (state.subscriptions.channels) {
+        supabase.removeChannel(state.subscriptions.channels);
+        state.subscriptions.channels = null;
+      }
+      if (state.subscriptions.profiles) {
+        supabase.removeChannel(state.subscriptions.profiles);
+        state.subscriptions.profiles = null;
+      }
+    }
+
+    // ----------------------------------------------
+    // 18. AVVIO
+    // ----------------------------------------------
+    // Controlla sessione all'avvio
+    checkSession();
+
+    // Se l'utente non è loggato, mostriamo il login
+    // (già gestito da checkSession)
+  </script>
+</body>
+</html>
